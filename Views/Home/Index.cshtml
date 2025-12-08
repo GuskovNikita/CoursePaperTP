@@ -1,8 +1,57 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Ресторан - Вход в систему";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <h1 class="display-4 mb-4">🍽️ Добро пожаловать в наш ресторан!</h1>
+            <p class="lead mb-5">Выберите вариант для продолжения</p>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <!-- Гость - бронирование -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <span class="display-1">👤</span>
+                    </div>
+                    <h3 class="card-title">Я гость</h3>
+                    <p class="card-text">Хочу забронировать столик без регистрации</p>
+                    <a asp-controller="Booking" asp-action="Create" class="btn btn-primary btn-lg w-100">
+                        Забронировать столик
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Вход в систему -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <span class="display-1">🔑</span>
+                    </div>
+                    <h3 class="card-title">Вход в систему</h3>
+                    <p class="card-text">Для сотрудников ресторана</p>
+
+                    <form method="post" asp-controller="Account" asp-action="Login">
+                        <div class="mb-3">
+                            <input type="email" name="email" class="form-control form-control-lg"
+                                   placeholder="Email" required>
+                        </div>
+                        <div class="mb-3">
+                            <input type="password" name="password" class="form-control form-control-lg"
+                                   placeholder="Пароль" required>
+                        </div>
+                        <button type="submit" class="btn btn-success btn-lg w-100">
+                            Войти
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

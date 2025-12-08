@@ -1,0 +1,65 @@
+﻿@{
+    ViewData["Title"] = "Панель управления";
+}
+
+<div class="container mt-5">
+    <div class="card shadow">
+        <div class="card-header bg-success text-white">
+            <h3 class="mb-0">✅ Успешный вход в систему</h3>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                <h4>Добро пожаловать, @ViewBag.UserName!</h4>
+                <p class="mb-0">Ваша роль: <strong>@ViewBag.UserRole</strong></p>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h5>Доступные функции:</h5>
+                    <ul class="list-group">
+                        @if (ViewBag.IsAgent)
+                        {
+                            <li class="list-group-item">
+                                <strong>👔 Функции официанта:</strong>
+                                <ul>
+                                    <li>Просмотр бронирований</li>
+                                    <li>Прием заказов от гостей</li>
+                                    <li>Управление столиками</li>
+                                </ul>
+                            </li>
+                        }
+
+                        @if (ViewBag.IsChef)
+                        {
+                            <li class="list-group-item">
+                                <strong>👨‍🍳 Функции повара:</strong>
+                                <ul>
+                                    <li>Управление меню</li>
+                                    <li>Добавление рецептов</li>
+                                    <li>Контроль ингредиентов</li>
+                                </ul>
+                            </li>
+                        }
+
+                        @if (ViewBag.IsAdmin)
+                        {
+                            <li class="list-group-item">
+                                <strong>👑 Функции администратора:</strong>
+                                <ul>
+                                    <li>Управление пользователями</li>
+                                    <li>Просмотр статистики</li>
+                                    <li>Настройки системы</li>
+                                </ul>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary me-2">На главную</a>
+                <a asp-action="Logout" class="btn btn-danger">Выйти из системы</a>
+            </div>
+        </div>
+    </div>
+</div>
