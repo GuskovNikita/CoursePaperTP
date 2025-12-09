@@ -7,8 +7,6 @@ namespace RestaurantSystem.Models;
 
 public partial class Booking
 {
-    [Key]
-    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
 
     public int? TableId { get; set; }

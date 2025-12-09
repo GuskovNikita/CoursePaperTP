@@ -29,19 +29,15 @@
                             <i class="bi bi-calendar-check me-2"></i>Бронирование столика @table?.Code
                         </h4>
                         <div class="table-badge">
-                            <span class="badge bg-success fs-6">@table?.Capacity мест</span>
+                            <span class="badge bg-success fs-6">мест: @table?.Capacity</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="card-body p-4">
                     <form method="post" asp-action="BookTable" id="bookingForm">
-                        <input type="hidden" name="TableId" value="@table?.Id" />
-
-                        <div class="alert alert-info mb-4">
-                            <i class="bi bi-info-circle me-2"></i>
-                            Все поля обязательны для заполнения. После бронирования вы получите подтверждение на email.
-                        </div>
+                        <input type="hidden" asp-for="Id" value="0" />
+                        <input type="hidden" asp-for="TableId" value="@table?.Id" />
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
@@ -111,11 +107,12 @@
                                     <span class="input-group-text">
                                         <i class="bi bi-clock"></i>
                                     </span>
-                                    <input asp-for="BookingTime" type="time" class="form-control"
-                                           min="12:00" max="22:00" step="1800" />
+                                    <select asp-for="BookingTime" class="form-select" id="bookingTimeSelect" required>
+                                        <option value="">-- Выберите время --</option>
+                                    </select>
                                 </div>
                                 <span asp-validation-for="BookingTime" class="text-danger small"></span>
-                                <small class="text-muted">Мы работаем с 12:00 до 22:00</small>
+                                <small class="text-muted">Мы работаем с 12:00 до 23:00</small>
                             </div>
 
                             <div class="col-md-4 mb-3">
@@ -142,9 +139,21 @@
                         </div>
 
                         <div class="form-check mb-4">
-                            <input class="form-check-input" type="checkbox" id="terms" required>
+                            <input class="form-check-input" type="checkbox" name="TermsAccepted" id="terms" required>
                             <label class="form-check-label" for="terms">
-                                Я согласен с <a href="#" class="text-decoration-none">правилами бронирования</a>
+                                Я согласен с
+                                <a href="#" class="text-decoration-none rules-link"
+                                   data-bs-toggle="popover"
+                                   data-bs-placement="top"
+                                   data-bs-title="📋 Правила бронирования"
+                                   data-bs-content="<ol>
+                                       <li>Бронь действует в течение 15 минут после указанного времени</li>
+                                       <li>При опоздании более чем на 15 минут столик может быть передан другим гостям</li>
+                                       <li>Отмена бронирования возможна по телефону</li>
+                                       <li>Ресторан оставляет за собой право отказать в обслуживании</li>                                                 
+                                   </ol>"
+                                   data-bs-html="true">правилами бронирования
+                            </a>
                             </label>
                             <div class="invalid-feedback">Необходимо согласиться с правилами</div>
                         </div>
@@ -324,4 +333,67 @@
 
         document.getElementById('maxCapacity').textContent = tableCapacity;
     });
+
+     document.addEventListener('DOMContentLoaded', function() {
+            const rulesPopover = new bootstrap.Popover(document.querySelector('.rules-link'), {
+                trigger: 'hover focus',
+                html: true,
+                container: 'body'
+            });
+
+            populateTimeOptions();
+
+            setDefaultDate();
+
+            setupFormValidation();
+        });
+
+        function populateTimeOptions() {
+            const select = document.getElementById('bookingTimeSelect');
+            if (!select) return;
+
+            const startHour = 12;
+            const endHour = 22;
+
+            for (let hour = startHour; hour <= endHour; hour++) {
+                for (let minute = 0; minute < 60; minute += 15) {
+                    if (hour === endHour && minute > 0) break;
+
+                    const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+                    const timeValue = `${timeString}:00`; 
+
+                    const option = document.createElement('option');
+                    option.value = timeValue;
+                    option.textContent = timeString;
+
+                    if (timeString === '19:00') {
+                        option.selected = true;
+                    }
+
+                    select.appendChild(option);
+                }
+            }
+        }
+
+        function setDefaultDate() {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const dateInput = document.querySelector('input[name="BookingDate"]');
+            if (dateInput && !dateInput.value) {
+                dateInput.value = tomorrow.toISOString().split('T')[0];
+            }
+        }
+
+        function setupFormValidation() {
+            const form = document.getElementById('bookingForm');
+            if (!form) return;
+
+            form.addEventListener('submit', function(event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        }
 </script>

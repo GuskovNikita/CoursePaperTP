@@ -90,9 +90,10 @@ namespace RestaurantSystem.Controllers
                 {
                     booking.Token = GenerateToken();
                     booking.Status = 1; 
-                    booking.UserId = null; 
+                    booking.UserId = null;
 
                     _context.Add(booking);
+
                     await _context.SaveChangesAsync();
 
                     await _context.Database.ExecuteSqlInterpolatedAsync(
@@ -101,7 +102,7 @@ namespace RestaurantSystem.Controllers
                     await transaction.CommitAsync();
 
                     TempData["BookingToken"] = booking.Token;
-                    TempData["BookingId"] = booking.Id;
+                    TempData["BookingId"] = booking.Id.ToString();
                     TempData["TableCode"] = table.Code;
                     TempData["BookingDate"] = booking.BookingDate?.ToString("dd.MM.yyyy");
                     TempData["BookingTime"] = booking.BookingTime?.ToString(@"hh\:mm");
