@@ -1,0 +1,491 @@
+﻿@model List<RestaurantSystem.Models.TableTop>
+@{
+    ViewData["Title"] = "Выбор столика";
+
+    var windowTables = Model.Where(t => t.Capacity == 2).ToList(); 
+    var centerTables = Model.Where(t => t.Capacity >= 6).ToList(); 
+    var wallTables = Model.Where(t => t.Capacity == 4).ToList();
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="mb-1">Бронирование столика</h4>
+                            <p class="text-muted mb-0">Выберите свободный столик из списка ниже</p>
+                        </div>
+                        <div class="text-end">
+                            <div class="badge bg-light text-dark border">
+                                <i class="bi bi-table me-1"></i>
+                                Всего столов: @Model.Count
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <div class="filters mb-4">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Вместимость</label>
+                                <select class="form-select" id="capacityFilter">
+                                    <option value="0">Любая</option>
+                                    <option value="2">2 человека</option>
+                                    <option value="4">4 человека</option>
+                                    <option value="6">6+ человек</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Зона</label>
+                                <select class="form-select" id="zoneFilter">
+                                    <option value="all">Все зоны</option>
+                                    <option value="window">У окна</option>
+                                    <option value="center">Центр зала</option>
+                                    <option value="wall">У стены</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="hall-zone mb-5">
+                        <div class="zone-header mb-4">
+                            <h5 class="mb-1">У окна</h5>
+                            <p class="text-muted small mb-0">С видом на улицу</p>
+                        </div>
+                        <div class="row g-3" id="windowTables">
+                            @foreach (var table in windowTables)
+                            {
+                                <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
+                                    <div class="table-card @(table.Status == 1 ? "available" : "occupied")"
+                                         data-capacity="@table.Capacity"
+                                         data-zone="window">
+                                        @if (table.Status == 1)
+                                        {
+                                            <a asp-action="BookTable" asp-route-id="@table.Id" class="table-card-link">
+                                                <div class="table-card-header">
+                                                    <span class="table-number">Стол @table.Code</span>
+                                                </div>
+                                                <div class="table-card-body">
+                                                    <div class="table-info">
+                                                        <div class="info-item">
+                                                            <i class="bi bi-people"></i>
+                                                            <span>@table.Capacity чел.</span>
+                                                        </div>
+                                                        <div class="info-item">
+                                                            <i class="bi bi-geo"></i>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="table-card-footer">
+                                                    <button class="btn btn-sm btn-success w-100">
+                                                        <i class="bi bi-check-circle me-1"></i> Выбрать
+                                                    </button>
+                                                </div>
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <div class="table-card-link disabled">
+                                                <div class="table-card-header">
+                                                    <span class="table-number">Стол @table.Code</span>
+                                                    <span class="badge bg-danger">Занят</span>
+                                                </div>
+                                                <div class="table-card-body">
+                                                    <div class="table-info">
+                                                        <div class="info-item">
+                                                            <i class="bi bi-people"></i>
+                                                            <span>@table.Capacity чел.</span>
+                                                        </div>
+                                                        <div class="info-item">
+                                                            <i class="bi bi-clock"></i>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="table-card-footer">
+                                                    <button class="btn btn-sm btn-danger w-100" disabled>
+                                                        <i class="bi bi-x-circle me-1"></i> Недоступен
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="hall-zone mb-5">
+                        <div class="zone-header mb-4">
+                            <h5 class="mb-1">Центр зала</h5>
+                            <p class="text-muted small mb-0">Для больших компаний</p>
+                        </div>
+                        <div class="row g-3" id="centerTables">
+                            @foreach (var table in centerTables)
+                            {
+                                <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
+                                    <div class="table-card @(table.Status == 1 ? "available" : "occupied")"
+                                         data-capacity="@table.Capacity"
+                                         data-zone="center">
+                                        @if (table.Status == 1)
+                                        {
+                                            <a asp-action="BookTable" asp-route-id="@table.Id" class="table-card-link">
+                                                <div class="table-card-header">
+                                                    <span class="table-number">Стол @table.Code</span>
+                                                    <span class="badge bg-warning">Большой</span>
+                                                </div>
+                                                <div class="table-card-body">
+                                                    <div class="table-info">
+                                                        <div class="info-item">
+                                                            <i class="bi bi-people"></i>
+                                                            <span>@table.Capacity чел.</span>
+                                                        </div>
+                                                        <div class="info-item">
+                                                            <i class="bi bi-geo"></i>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="table-card-footer">
+                                                    <button class="btn btn-sm btn-success w-100">
+                                                        <i class="bi bi-check-circle me-1"></i> Выбрать
+                                                    </button>
+                                                </div>
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <div class="table-card-link disabled">
+                                                <div class="table-card-header">
+                                                    <span class="table-number">Стол @table.Code</span>
+                                                    <span class="badge bg-danger">Занят</span>
+                                                    <span class="badge bg-warning">Большой</span>
+                                                </div>
+                                                <div class="table-card-body">
+                                                    <div class="table-info">
+                                                        <div class="info-item">
+                                                            <i class="bi bi-people"></i>
+                                                            <span>@table.Capacity чел.</span>
+                                                        </div>
+                                                        <div class="info-item">
+                                                            <i class="bi bi-clock"></i>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="table-card-footer">
+                                                    <button class="btn btn-sm btn-danger w-100" disabled>
+                                                        <i class="bi bi-x-circle me-1"></i> Недоступен
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="hall-zone">
+                        <div class="zone-header mb-4">
+                            <h5 class="mb-1">У стены</h5>
+                            <p class="text-muted small mb-0">Уютные столики для небольшой компании</p>
+                        </div>
+                        <div class="row g-3" id="wallTables">
+                            @foreach (var table in wallTables)
+                            {
+                                <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
+                                    <div class="table-card @(table.Status == 1 ? "available" : "occupied")"
+                                         data-capacity="@table.Capacity"
+                                         data-zone="wall">
+                                        @if (table.Status == 1)
+                                        {
+                                            <a asp-action="BookTable" asp-route-id="@table.Id" class="table-card-link">
+                                                <div class="table-card-header">
+                                                    <span class="table-number">Стол @table.Code</span>
+                                                </div>
+                                                <div class="table-card-body">
+                                                    <div class="table-info">
+                                                        <div class="info-item">
+                                                            <i class="bi bi-people"></i>
+                                                            <span>@table.Capacity чел.</span>
+                                                        </div>
+                                                        <div class="info-item">
+                                                            <i class="bi bi-geo"></i>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="table-card-footer">
+                                                    <button class="btn btn-sm btn-success w-100">
+                                                        <i class="bi bi-check-circle me-1"></i> Выбрать
+                                                    </button>
+                                                </div>
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <div class="table-card-link disabled">
+                                                <div class="table-card-header">
+                                                    <span class="table-number">Стол @table.Code</span>
+                                                    <span class="badge bg-danger">Занят</span>
+                                                </div>
+                                                <div class="table-card-body">
+                                                    <div class="table-info">
+                                                        <div class="info-item">
+                                                            <i class="bi bi-people"></i>
+                                                            <span>@table.Capacity чел.</span>
+                                                        </div>
+                                                        <div class="info-item">
+                                                            <i class="bi bi-clock"></i>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="table-card-footer">
+                                                    <button class="btn btn-sm btn-danger w-100" disabled>
+                                                        <i class="bi bi-x-circle me-1"></i> Недоступен
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    @if (!Model.Any())
+                    {
+                        <div class="text-center py-5">
+                            <i class="bi bi-table display-1 text-muted mb-3"></i>
+                            <h5>Нет доступных столов</h5>
+                            <p class="text-muted">Попробуйте выбрать другую дату или время</p>
+                            <a asp-controller="Home" asp-action="Index" class="btn btn-outline-primary">
+                                На главную
+                            </a>
+                        </div>
+                    }
+                </div>
+
+                <div class="card-footer bg-white text-center">
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-link text-decoration-none">
+                        <i class="bi bi-arrow-left me-1"></i> Вернуться на главную
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .hall-zone {
+        padding: 25px;
+        background: #f8f9fa;
+        border-radius: 15px;
+        margin-bottom: 30px;
+    }
+
+    .zone-header {
+        padding-bottom: 15px;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .table-card {
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        height: 100%;
+        border: 3px solid transparent;
+        background: white;
+    }
+
+        .table-card.available {
+            border-color: #28a745;
+        }
+
+            .table-card.available:hover {
+                border-color: #20c997;
+                box-shadow: 0 10px 30px rgba(32, 201, 151, 0.25);
+                transform: translateY(-5px);
+            }
+
+        .table-card.occupied {
+            border-color: #dc3545;
+            background: #fff5f5;
+        }
+
+    .table-card-link {
+        display: block;
+        text-decoration: none;
+        color: inherit;
+        height: 100%;
+    }
+
+    .table-card.disabled {
+        cursor: not-allowed;
+    }
+
+    .table-card-header {
+        padding: 20px;
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border-bottom: 1px solid #dee2e6;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .table-number {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: #212529;
+    }
+
+    .table-card-body {
+        padding: 25px 20px;
+    }
+
+    .table-info {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 1rem;
+        color: #495057;
+    }
+
+        .info-item i {
+            width: 24px;
+            font-size: 1.2rem;
+        }
+
+        .info-item .bi-people {
+            color: #4dabf7;
+        }
+
+        .info-item .bi-geo {
+            color: #20c997;
+        }
+
+        .info-item .bi-clock {
+            color: #dc3545;
+        }
+
+    .table-card-footer {
+        padding: 20px;
+        background: #f8f9fa;
+        border-top: 1px solid #e9ecef;
+    }
+
+    .badge.bg-purple {
+        background-color: #6c5ce7;
+        color: white;
+    }
+
+    .badge.bg-warning {
+        background-color: #ffc107;
+        color: #212529;
+    }
+
+    .badge.bg-danger {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .filters {
+        background: white;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        margin-bottom: 30px;
+    }
+
+        .filters .form-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 10px;
+        }
+
+    @@media (max-width: 768px) {
+        .table-card-header {
+            flex-direction: column;
+            gap: 10px;
+            text-align: center;
+        }
+
+        .table-info {
+            align-items: center;
+        }
+
+        .hall-zone {
+            padding: 15px;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const capacityFilter = document.getElementById('capacityFilter');
+        const zoneFilter = document.getElementById('zoneFilter');
+        const tables = document.querySelectorAll('.table-card');
+
+        function filterTables() {
+            const capacity = parseInt(capacityFilter.value);
+            const zone = zoneFilter.value;
+
+            tables.forEach(table => {
+                let show = true;
+                const tableCard = table.closest('.col-xl-3, .col-lg-4, .col-md-6, .col-sm-6');
+
+                if (capacity > 0) {
+                    const tableCapacity = parseInt(table.dataset.capacity);
+                    if (capacity === 6) {
+                        if (tableCapacity < 6) {
+                            show = false;
+                        }
+                    } else {
+                        if (tableCapacity !== capacity) {
+                            show = false;
+                        }
+                    }
+                }
+
+                if (zone !== 'all') {
+                    if (table.dataset.zone !== zone) {
+                        show = false;
+                    }
+                }
+
+                if (tableCard) {
+                    tableCard.style.display = show ? 'block' : 'none';
+                }
+                table.style.display = show ? 'block' : 'none';
+            });
+
+            document.querySelectorAll('.hall-zone').forEach(zone => {
+                const visibleTables = zone.querySelectorAll('.col-xl-3[style*="block"], .col-lg-4[style*="block"], .col-md-6[style*="block"], .col-sm-6[style*="block"]');
+                const anyVisible = Array.from(visibleTables).some(table => table.style.display !== 'none');
+                zone.style.display = anyVisible ? 'block' : 'none';
+            });
+        }
+
+        filterTables();
+
+        capacityFilter.addEventListener('change', filterTables);
+        zoneFilter.addEventListener('change', filterTables);
+
+        const resetFilters = document.createElement('button');
+        resetFilters.className = 'btn btn-outline-secondary btn-sm mt-2';
+        resetFilters.innerHTML = '<i class="bi bi-arrow-counterclockwise me-1"></i> Сбросить фильтры';
+        resetFilters.addEventListener('click', function() {
+            capacityFilter.value = '0';
+            zoneFilter.value = 'all';
+            filterTables();
+        });
+
+        document.querySelector('.filters').appendChild(resetFilters);
+    });
+</script>

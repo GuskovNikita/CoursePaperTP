@@ -62,6 +62,14 @@ public partial class RestaurantDbContext : DbContext
                 .HasColumnName("mobile");
             entity.Property(e => e.Status).HasColumnName("status");
             entity.Property(e => e.TableId).HasColumnName("tableId");
+            entity.Property(e => e.BookingDate)
+                .HasColumnName("booking_date")
+                .HasColumnType("date"); 
+            entity.Property(e => e.BookingTime)
+                .HasColumnName("booking_time")
+                .HasColumnType("time without time zone"); 
+            entity.Property(e => e.GuestsCount)
+                .HasColumnName("guests_count");
             entity.Property(e => e.Token)
                 .HasMaxLength(100)
                 .HasColumnName("token");
@@ -96,6 +104,7 @@ public partial class RestaurantDbContext : DbContext
                 .HasColumnName("sku");
             entity.Property(e => e.Status).HasColumnName("status");
             entity.Property(e => e.Unit).HasColumnName("unit");
+
 
             entity.HasOne(d => d.Booking).WithMany(p => p.BookingItems)
                 .HasForeignKey(d => d.BookingId)

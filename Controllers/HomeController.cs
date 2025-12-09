@@ -17,17 +17,8 @@ namespace RestaurantSystem.Controllers
             _context = context;
         }
 
-        public async Task<IActionResult> Index()
+        public IActionResult Index()
         {
-            try
-            {
-                var userCount = await _context.Users.CountAsync();
-                ViewBag.Message = $"БД подключена! Пользователей: {userCount}";
-            }
-            catch (Exception ex)
-            {
-                ViewBag.Message = $"Ошибка БД: {ex.Message}";
-            }
 
             return View();
         }

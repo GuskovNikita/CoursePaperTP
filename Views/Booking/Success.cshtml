@@ -1,0 +1,53 @@
+﻿@{
+    ViewData["Title"] = "Бронь подтверждена";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow text-center">
+                <div class="card-body py-5">
+                    <div class="mb-4">
+                        <div class="display-1 text-success">✅</div>
+                    </div>
+
+                    <h2 class="card-title mb-3">Бронь подтверждена!</h2>
+
+                    <p class="card-text mb-4">
+                        Ваш столик успешно забронирован.
+                        Подтверждение отправлено на указанный email.
+                    </p>
+
+                    <div class="alert alert-success text-start">
+                        <h6>📋 Информация о брони:</h6>
+                        <ul class="mb-0">
+                            <li>Номер брони: <strong>#@ViewBag.BookingId</strong></li>
+                            <li>Токен подтверждения: <strong class="text-primary">@ViewBag.Token</strong></li>
+                            <li>Столик: <strong>@ViewBag.TableCode</strong></li>
+                            <li>Дата: <strong>@ViewBag.BookingDate</strong></li>
+                            <li>Время: <strong>@ViewBag.BookingTime</strong></li>
+                            <li>Статус: <span class="badge bg-success">Подтверждено</span></li>
+                        </ul>
+                    </div>
+
+                    <div class="alert alert-info mt-4">
+                        <h6><i class="bi bi-info-circle"></i> Важно!</h6>
+                        <p class="mb-2">
+                            Сохраните токен подтверждения: <strong class="text-primary">@ViewBag.Token</strong>
+                        </p>
+                        <p class="mb-0">Покажите его при посещении ресторана.</p>
+                    </div>
+
+                    <div class="mt-5">
+                        <a asp-controller="Home" asp-action="Index" class="btn btn-primary btn-lg me-3">
+                            На главную
+                        </a>
+                        <button onclick="window.print()" class="btn btn-outline-secondary btn-lg">
+                            <i class="bi bi-printer me-1"></i> Распечатать
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

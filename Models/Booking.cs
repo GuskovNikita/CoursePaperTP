@@ -1,10 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace RestaurantSystem.Models;
 
 public partial class Booking
 {
+    [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
 
     public int? TableId { get; set; }
@@ -26,6 +30,14 @@ public partial class Booking
     public string? Email { get; set; }
 
     public string? Content { get; set; }
+    [Column("booking_date")]
+    public DateTime? BookingDate { get; set; }
+
+    [Column("booking_time")]
+    public TimeSpan? BookingTime { get; set; }
+
+    [Column("guests_count")]
+    public short? GuestsCount { get; set; }
 
     public virtual ICollection<BookingItem> BookingItems { get; set; } = new List<BookingItem>();
 

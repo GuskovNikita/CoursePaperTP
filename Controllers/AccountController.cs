@@ -56,7 +56,7 @@ namespace RestaurantSystem.Controllers
             return RedirectToAction("Dashboard", "Account");
         }
 
-        // GET: /Account/Dashboard - временная страница после входа
+        // GET: /Account/Dashboard
         public IActionResult Dashboard()
         {
             var userId = HttpContext.Session.GetInt32("UserId");

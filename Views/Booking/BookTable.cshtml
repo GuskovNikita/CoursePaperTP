@@ -1,0 +1,327 @@
+﻿@model RestaurantSystem.Models.Booking
+@{
+    ViewData["Title"] = "Бронирование столика";
+    var table = ViewBag.Table as RestaurantSystem.Models.TableTop;
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="steps mb-5">
+                <div class="step completed">
+                    <span class="step-number">1</span>
+                    <span class="step-label">Выбор столика</span>
+                </div>
+                <div class="step active">
+                    <span class="step-number">2</span>
+                    <span class="step-label">Ваши данные</span>
+                </div>
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <span class="step-label">Подтверждение</span>
+                </div>
+            </div>
+
+            <div class="card shadow border-0">
+                <div class="card-header bg-white border-bottom py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            <i class="bi bi-calendar-check me-2"></i>Бронирование столика @table?.Code
+                        </h4>
+                        <div class="table-badge">
+                            <span class="badge bg-success fs-6">@table?.Capacity мест</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body p-4">
+                    <form method="post" asp-action="BookTable" id="bookingForm">
+                        <input type="hidden" name="TableId" value="@table?.Id" />
+
+                        <div class="alert alert-info mb-4">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Все поля обязательны для заполнения. После бронирования вы получите подтверждение на email.
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="FirstName" class="form-label fw-bold"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="bi bi-person"></i>
+                                    </span>
+                                    <input asp-for="FirstName" class="form-control" placeholder="Иван" />
+                                </div>
+                                <span asp-validation-for="FirstName" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="LastName" class="form-label fw-bold"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="bi bi-person"></i>
+                                    </span>
+                                    <input asp-for="LastName" class="form-control" placeholder="Иванов" />
+                                </div>
+                                <span asp-validation-for="LastName" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Mobile" class="form-label fw-bold"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="bi bi-telephone"></i>
+                                    </span>
+                                    <input asp-for="Mobile" class="form-control" placeholder="+7 (999) 123-45-67" />
+                                </div>
+                                <span asp-validation-for="Mobile" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Email" class="form-label fw-bold"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="bi bi-envelope"></i>
+                                    </span>
+                                    <input asp-for="Email" class="form-control" placeholder="example@mail.ru" />
+                                </div>
+                                <span asp-validation-for="Email" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="BookingDate" class="form-label fw-bold"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="bi bi-calendar"></i>
+                                    </span>
+                                    <input asp-for="BookingDate" type="date" class="form-control"
+                                           min="@DateTime.Now.ToString("yyyy-MM-dd")"
+                                           max="@DateTime.Now.AddMonths(3).ToString("yyyy-MM-dd")" />
+                                </div>
+                                <span asp-validation-for="BookingDate" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="BookingTime" class="form-label fw-bold"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="bi bi-clock"></i>
+                                    </span>
+                                    <input asp-for="BookingTime" type="time" class="form-control"
+                                           min="12:00" max="22:00" step="1800" />
+                                </div>
+                                <span asp-validation-for="BookingTime" class="text-danger small"></span>
+                                <small class="text-muted">Мы работаем с 12:00 до 22:00</small>
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="GuestsCount" class="form-label fw-bold"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="bi bi-people"></i>
+                                    </span>
+                                    <select asp-for="GuestsCount" class="form-select" id="guestsCount">
+                                    </select>
+                                </div>
+                                <span asp-validation-for="GuestsCount" class="text-danger small"></span>
+                                <small class="text-muted">Макс: <span id="maxCapacity">@table?.Capacity</span> чел.</small>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="Content" class="form-label fw-bold">
+                                <i class="bi bi-chat-left-text me-1"></i>Комментарий
+                            </label>
+                            <textarea asp-for="Content" class="form-control" rows="3"
+                                      placeholder="Аллергии, особые пожелания, праздник..."></textarea>
+                            <span asp-validation-for="Content" class="text-danger small"></span>
+                        </div>
+
+                        <div class="form-check mb-4">
+                            <input class="form-check-input" type="checkbox" id="terms" required>
+                            <label class="form-check-label" for="terms">
+                                Я согласен с <a href="#" class="text-decoration-none">правилами бронирования</a>
+                            </label>
+                            <div class="invalid-feedback">Необходимо согласиться с правилами</div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Create" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i>Выбрать другой столик
+                            </a>
+                            <button type="submit" class="btn btn-success px-4">
+                                <i class="bi bi-check-circle me-1"></i>Забронировать
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const dateInput = document.querySelector('input[name="BookingDate"]');
+            if (dateInput && !dateInput.value) {
+                dateInput.value = tomorrow.toISOString().split('T')[0];
+            }
+
+            const timeInput = document.querySelector('input[name="BookingTime"]');
+            if (timeInput && !timeInput.value) {
+                timeInput.value = '19:00';
+            }
+
+            (function () {
+                'use strict'
+                var forms = document.querySelectorAll('.needs-validation')
+                Array.prototype.slice.call(forms)
+                    .forEach(function (form) {
+                        form.addEventListener('submit', function (event) {
+                            if (!form.checkValidity()) {
+                                event.preventDefault()
+                                event.stopPropagation()
+                            }
+                            form.classList.add('was-validated')
+                        }, false)
+                    })
+            })()
+        });
+    </script>
+}
+
+<style>
+    .steps {
+        display: flex;
+        justify-content: space-between;
+        position: relative;
+    }
+
+        .steps::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 10%;
+            right: 10%;
+            height: 2px;
+            background: #dee2e6;
+            z-index: 1;
+        }
+
+    .step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        z-index: 2;
+        flex: 1;
+    }
+
+    .step-number {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-bottom: 8px;
+        background: white;
+        border: 2px solid #dee2e6;
+        color: #6c757d;
+    }
+
+    .step.completed .step-number {
+        background: #20c997;
+        border-color: #20c997;
+        color: white;
+    }
+
+    .step.active .step-number {
+        background: #0d6efd;
+        border-color: #0d6efd;
+        color: white;
+    }
+
+    .step-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+        text-align: center;
+    }
+
+    .step.active .step-label {
+        color: #0d6efd;
+        font-weight: bold;
+    }
+
+    .table-badge {
+        text-align: right;
+    }
+
+    .input-group-text {
+        background-color: #f8f9fa;
+    }
+
+    #bookingForm .form-control:focus,
+    #bookingForm .form-select:focus {
+        border-color: #20c997;
+        box-shadow: 0 0 0 0.25rem rgba(32, 201, 151, 0.25);
+    }
+</style>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const tableCapacity = @table?.Capacity; 
+        const guestsSelect = document.getElementById('guestsCount');
+
+        let minGuests = 1;
+
+        if (tableCapacity >= 6) {
+            minGuests = 4; 
+        } else if (tableCapacity == 4) {
+            minGuests = 2; 
+        } else if (tableCapacity == 2) {
+            minGuests = 1;
+        }
+
+        guestsSelect.innerHTML = '';
+
+        for (let i = minGuests; i <= tableCapacity; i++) {
+            const option = document.createElement('option');
+            option.value = i;
+            option.textContent = i + ' ' + getRussianWord(i);
+            guestsSelect.appendChild(option);
+
+            if (i === minGuests) {
+                option.selected = true;
+            }
+        }
+
+        function getRussianWord(number) {
+            const lastDigit = number % 10;
+            const lastTwoDigits = number % 100;
+
+            if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
+                return 'гостей';
+            }
+
+            if (lastDigit === 1) {
+                return 'гость';
+            } else if (lastDigit >= 2 && lastDigit <= 4) {
+                return 'гостя';
+            } else {
+                return 'гостей';
+            }
+        }
+
+        document.getElementById('maxCapacity').textContent = tableCapacity;
+    });
+</script>
