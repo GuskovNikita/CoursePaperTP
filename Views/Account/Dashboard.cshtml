@@ -17,27 +17,27 @@
                 <div class="col-md-12">
                     <h5>Доступные функции:</h5>
                     <ul class="list-group">
+                        @if (ViewBag.IsAgent || ViewBag.IsChef)
+                        {
+                            <li class="list-group-item">
+                                <strong>📋 Отслеживание заказов:</strong>
+                                <div class="mt-2">
+                                    <a asp-controller="OrderTracking" asp-action="Index" class="btn btn-info">
+                                        <i class="bi bi-list-check me-1"></i> Просмотр активных заказов
+                                    </a>
+                                </div>
+                            </li>
+                        }
+
                         @if (ViewBag.IsAgent)
                         {
                             <li class="list-group-item">
                                 <strong>👔 Функции официанта:</strong>
-                                <ul>
-                                    <li>Просмотр бронирований</li>
-                                    <li>Прием заказов от гостей</li>
-                                    <li>Управление столиками</li>
-                                </ul>
-                            </li>
-                        }
-
-                        @if (ViewBag.IsChef)
-                        {
-                            <li class="list-group-item">
-                                <strong>👨‍🍳 Функции повара:</strong>
-                                <ul>
-                                    <li>Управление меню</li>
-                                    <li>Добавление рецептов</li>
-                                    <li>Контроль ингредиентов</li>
-                                </ul>
+                                <div class="mt-2">
+                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#orderTypeModal">
+                                        <i class="bi bi-plus-circle me-1"></i> Прием заказов от гостей
+                                    </button>
+                                </div>
                             </li>
                         }
 
@@ -45,11 +45,11 @@
                         {
                             <li class="list-group-item">
                                 <strong>👑 Функции администратора:</strong>
-                                <ul>
-                                    <li>Управление пользователями</li>
-                                    <li>Просмотр статистики</li>
-                                    <li>Настройки системы</li>
-                                </ul>
+                                <div class="mt-2">
+                                    <a asp-controller="Admin" asp-action="Reports" class="btn btn-danger me-2">
+                                        <i class="bi bi-bar-chart me-1"></i> Отчеты и аналитика
+                                    </a>        
+                                </div>
                             </li>
                         }
                     </ul>
@@ -63,3 +63,75 @@
         </div>
     </div>
 </div>
+
+@if (ViewBag.IsAgent)
+{
+    <div class="modal fade" id="orderTypeModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Выберите тип заказа</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <span class="display-1">📝</span>
+                                    </div>
+                                    <h5 class="card-title">Обычный заказ</h5>
+                                    <p class="card-text">Для гостей без бронирования</p>
+                                    <a asp-controller="Waiter" asp-action="CreateOrder" class="btn btn-primary w-100">
+                                        Выбрать
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <span class="display-1">🔑</span>
+                                    </div>
+                                    <h5 class="card-title">Заказ по брони</h5>
+                                    <p class="card-text">Для гостей с бронированием</p>
+                                    <button type="button" class="btn btn-success w-100" data-bs-toggle="modal" data-bs-target="#tokenModal" data-bs-dismiss="modal">
+                                        Выбрать
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="tokenModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Введите токен бронирования</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="get" asp-controller="Waiter" asp-action="CreateOrder" id="tokenForm">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="token" class="form-label">Токен брони (6 цифр)</label>
+                            <input type="text" class="form-control" id="token" name="token"
+                                   pattern="[0-9]{6}" maxlength="6" required
+                                   placeholder="123456">
+                            <div class="form-text">Токен был выдан гостю при бронировании</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="submit" class="btn btn-success">Продолжить</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}

@@ -1,0 +1,344 @@
+﻿@model List<RestaurantSystem.Models.OrderTrackingViewModel>
+@{
+    ViewData["Title"] = "Отслеживание заказов";
+    var isChef = ViewBag.IsChef as bool? ?? false;
+    var isAgent = ViewBag.IsAgent as bool? ?? false;
+}
+
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">
+                    <i class="bi bi-list-check me-2"></i>Активные заказы
+                </h4>
+                <div>
+                    @if (isChef)
+                    {
+                        <span class="badge bg-warning">Повар</span>
+                    }
+                    @if (isAgent)
+                    {
+                        <span class="badge bg-info">Официант</span>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body">
+            @if (!Model.Any())
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-check-circle display-1 text-muted mb-3"></i>
+                    <h5>Нет активных заказов</h5>
+                    <p class="text-muted">Все заказы обработаны</p>
+                </div>
+            }
+            else
+            {
+                <div class="accordion" id="ordersAccordion">
+                    @foreach (var order in Model)
+                    {
+                        var readyItems = order.Items.Count(i => i.Status == 2);
+                        var totalItems = order.Items.Count;
+
+                        <div class="accordion-item mb-2 border">
+                            <h2 class="accordion-header" id="heading-@order.BookingId">
+                                <button class="accordion-button collapsed" type="button"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#collapse-@order.BookingId"
+                                        aria-expanded="false"
+                                        aria-controls="collapse-@order.BookingId">
+                                    <div class="d-flex justify-content-between w-100 me-3">
+                                        <div>
+                                            <span class="fw-bold">Заказ #@order.BookingId</span>
+                                            <span class="badge bg-secondary ms-2">@order.CustomerInfo</span>
+                                            @if (!string.IsNullOrEmpty(order.TableInfo) && order.TableInfo != "Без столика")
+                                            {
+                                                <span class="badge bg-info ms-1">@order.TableInfo</span>
+                                            }
+                                            @if (order.BookingToken != null)
+                                            {
+                                                <span class="badge bg-success ms-1">Бронь: @order.BookingToken</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-warning ms-1">Без брони</span>
+                                            }
+                                        </div>
+                                        <div>
+                                            <span class="badge @(readyItems == totalItems ? "bg-success" : "bg-warning") me-2">
+                                                @readyItems/@totalItems готово
+                                            </span>
+                                            @if (order.CanBeClosed)
+                                            {
+                                                <span class="badge bg-success me-2">Готов к закрытию</span>
+                                            }
+                                            <i class="bi bi-chevron-down"></i>
+                                        </div>
+                                    </div>
+                                </button>
+                            </h2>
+
+                            <div id="collapse-@order.BookingId" class="accordion-collapse collapse"
+                                 aria-labelledby="heading-@order.BookingId"
+                                 data-bs-parent="#ordersAccordion">
+                                <div class="accordion-body p-0">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover mb-0">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Блюдо</th>
+                                                    <th width="100">Кол-во</th>
+                                                    <th width="150">Статус</th>
+                                                    <th width="120">Цена</th>
+                                                    @if (isChef)
+                                                    {
+                                                        <th width="120">Действия</th>
+                                                    }
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var item in order.Items)
+                                                {
+                                                    <tr>
+                                                        <td>
+                                                            <strong>@item.ItemName</strong>
+                                                            @if (!string.IsNullOrEmpty(item.Notes))
+                                                            {
+                                                                <br>
+                                                                <small class="text-muted">@item.Notes</small>
+                                                            }
+                                                            @if (item.RequiresCooking)
+                                                            {
+                                                                <br>
+                                                                <small class="text-muted"><i class="bi bi-fire"></i> Требует приготовления</small>
+                                                            }
+                                                        </td>
+                                                        <td>@item.Quantity</td>
+                                                        <td>
+                                                            @if (item.Status == 1)
+                                                            {
+                                                                <span class="badge bg-warning">@item.StatusText</span>
+                                                            }
+                                                            else if (item.Status == 2)
+                                                            {
+                                                                <span class="badge bg-success">@item.StatusText</span>
+                                                            }
+                                                        </td>
+                                                        <td>@item.Price.ToString("N0") ₽</td>
+                                                        @if (isChef)
+                                                        {
+                                                            <td>
+                                                                @if (item.Status == 1)
+                                                                {
+                                                                    <button class="btn btn-sm btn-success mark-ready-btn"
+                                                                            data-item-id="@item.Id">
+                                                                        <i class="bi bi-check-lg"></i> Отметить готовым
+                                                                    </button>
+                                                                }
+                                                                else if (item.Status == 2)
+                                                                {
+                                                                    <span class="badge bg-success"><i class="bi bi-check-lg"></i> Готово</span>
+                                                                }
+                                                            </td>
+                                                        }
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                            <tfoot>
+                                                <tr>
+                                                    <td colspan="@(isChef ? "4" : "3")" class="text-end">
+                                                        <strong>Всего позиций: @order.Items.Count</strong>
+                                                    </td>
+                                                    @if (isChef)
+                                                    {
+                                                        <td></td>
+                                                    }
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+
+                                    @if (isAgent && order.CanBeClosed)
+                                    {
+                                        <div class="p-3 bg-light border-top">
+                                            <button class="btn btn-success close-order-btn"
+                                                    data-booking-id="@order.BookingId">
+                                                <i class="bi bi-check-circle me-1"></i>
+                                                @if (!string.IsNullOrEmpty(order.BookingToken))
+                                                {
+                                                    <span>Закрыть заказ и завершить бронь</span>
+                                                }
+                                                else
+                                                {
+                                                    <span>Закрыть заказ</span>
+                                                }
+                                            </button>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="card-footer">
+            <a asp-controller="Account" asp-action="Dashboard" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Назад в панель
+            </a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.mark-ready-btn')) {
+                const button = e.target.closest('.mark-ready-btn');
+                const itemId = button.getAttribute('data-item-id');
+
+                button.disabled = true;
+                button.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+                fetch('/OrderTracking/UpdateItemStatus', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        itemId: parseInt(itemId),
+                        status: 2
+                    })
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        showNotification(result.message || 'Статус обновлен!', 'success');
+
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1000);
+                    } else {
+                        alert('Ошибка: ' + result.error);
+                        button.disabled = false;
+                        button.innerHTML = '<i class="bi bi-check-lg"></i> Отметить готовым';
+                    }
+                })
+                .catch(error => {
+                    alert('Ошибка сети: ' + error.message);
+                    button.disabled = false;
+                    button.innerHTML = '<i class="bi bi-check-lg"></i> Отметить готовым';
+                });
+            }
+
+            if (e.target.closest('.close-order-btn')) {
+                const button = e.target.closest('.close-order-btn');
+                const bookingId = button.getAttribute('data-booking-id');
+                const row = button.closest('.accordion-item');
+                const hasBooking = row.querySelector('.badge.bg-success') !== null;
+
+                let confirmMessage = 'Вы уверены, что хотите закрыть заказ #' + bookingId + '?';
+
+                if (hasBooking) {
+                    confirmMessage += '\nПри закрытии заказа будет завершена бронь и освобожден столик.';
+                } else {
+                    confirmMessage += '\nЭтот заказ не связан с бронированием.';
+                }
+
+                if (confirm(confirmMessage)) {
+                    button.disabled = true;
+                    button.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Закрытие...';
+
+                    fetch('/OrderTracking/CloseOrder', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            bookingId: parseInt(bookingId)
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(result => {
+                        if (result.success) {
+                            showNotification(result.message || 'Заказ закрыт!', 'success');
+                            const accordionItem = button.closest('.accordion-item');
+                            accordionItem.style.opacity = '0.5';
+                            accordionItem.style.transition = 'opacity 0.5s';
+
+                            setTimeout(() => {
+                                location.reload();
+                            }, 1500);
+                        } else {
+                            alert('Ошибка: ' + result.error);
+                            button.disabled = false;
+                            button.innerHTML = '<i class="bi bi-check-circle me-1"></i> Закрыть заказ';
+                        }
+                    })
+                    .catch(error => {
+                        alert('Ошибка сети: ' + error.message);
+                        button.disabled = false;
+                        button.innerHTML = '<i class="bi bi-check-circle me-1"></i> Закрыть заказ';
+                    });
+                }
+            }
+        });
+
+        function showNotification(message, type) {
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-bg-${type} border-0 position-fixed bottom-0 end-0 m-3`;
+            toast.setAttribute('role', 'alert');
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            `;
+
+            document.body.appendChild(toast);
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        setTimeout(() => {
+            location.reload();
+        }, 30000);
+    </script>
+
+    <style>
+        .accordion-button:not(.collapsed) {
+            background-color: #e7f5ff;
+            color: #0c63e4;
+        }
+
+        .accordion-button:focus {
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+
+        .mark-ready-btn {
+            min-width: 140px;
+        }
+
+        .close-order-btn {
+            min-width: 250px;
+        }
+
+        .table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .toast {
+            z-index: 1060;
+        }
+    </style>
+}

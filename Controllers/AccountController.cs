@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RestaurantSystem.Data;
-using RestaurantSystem.Models;
 
 namespace RestaurantSystem.Controllers
 {
@@ -52,7 +51,6 @@ namespace RestaurantSystem.Controllers
             HttpContext.Session.SetInt32("IsChef", user.Chef ? 1 : 0);
             HttpContext.Session.SetInt32("IsAgent", user.Agent ? 1 : 0);
 
-            // Временная
             return RedirectToAction("Dashboard", "Account");
         }
 

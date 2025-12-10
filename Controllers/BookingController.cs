@@ -88,7 +88,7 @@ namespace RestaurantSystem.Controllers
 
                 try
                 {
-                    booking.Token = GenerateToken();
+                    booking.Token = await GenerateUniqueTokenAsync();
                     booking.Status = 1; 
                     booking.UserId = null;
 
@@ -122,9 +122,20 @@ namespace RestaurantSystem.Controllers
             return View(booking);
         }
 
-        private string GenerateToken()
+        private async Task<string> GenerateUniqueTokenAsync()
         {
-            return _random.Next(100000, 999999).ToString();
+            string token;
+            bool isUnique;
+
+            do
+            {
+                token = _random.Next(100000, 1000000).ToString();
+
+                isUnique = !await _context.Bookings.AnyAsync(b => b.Token == token);
+            }
+            while (!isUnique); 
+
+            return token;
         }
 
         // GET: /Booking/Success 

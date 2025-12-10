@@ -35,7 +35,7 @@
                 </div>
 
                 <div class="card-body p-4">
-                    <form method="post" asp-action="BookTable" id="bookingForm">
+                    <form method="post" asp-action="BookTable" id="bookingForm" class="needs-validation" novalidate>
                         <input type="hidden" asp-for="Id" value="0" />
                         <input type="hidden" asp-for="TableId" value="@table?.Id" />
 
@@ -46,7 +46,7 @@
                                     <span class="input-group-text">
                                         <i class="bi bi-person"></i>
                                     </span>
-                                    <input asp-for="FirstName" class="form-control" placeholder="Иван" />
+                                    <input asp-for="FirstName" class="form-control" placeholder="Иван" required />
                                 </div>
                                 <span asp-validation-for="FirstName" class="text-danger small"></span>
                             </div>
@@ -57,7 +57,7 @@
                                     <span class="input-group-text">
                                         <i class="bi bi-person"></i>
                                     </span>
-                                    <input asp-for="LastName" class="form-control" placeholder="Иванов" />
+                                    <input asp-for="LastName" class="form-control" placeholder="Иванов" required />
                                 </div>
                                 <span asp-validation-for="LastName" class="text-danger small"></span>
                             </div>
@@ -70,7 +70,7 @@
                                     <span class="input-group-text">
                                         <i class="bi bi-telephone"></i>
                                     </span>
-                                    <input asp-for="Mobile" class="form-control" placeholder="+7 (999) 123-45-67" />
+                                    <input asp-for="Mobile" class="form-control" placeholder="+7 (999) 123-45-67" required />
                                 </div>
                                 <span asp-validation-for="Mobile" class="text-danger small"></span>
                             </div>
@@ -81,7 +81,7 @@
                                     <span class="input-group-text">
                                         <i class="bi bi-envelope"></i>
                                     </span>
-                                    <input asp-for="Email" class="form-control" placeholder="example@mail.ru" />
+                                    <input asp-for="Email" type="email" class="form-control" placeholder="example@mail.ru" required />
                                 </div>
                                 <span asp-validation-for="Email" class="text-danger small"></span>
                             </div>
@@ -94,7 +94,7 @@
                                     <span class="input-group-text">
                                         <i class="bi bi-calendar"></i>
                                     </span>
-                                    <input asp-for="BookingDate" type="date" class="form-control"
+                                    <input asp-for="BookingDate" type="date" class="form-control" required
                                            min="@DateTime.Now.ToString("yyyy-MM-dd")"
                                            max="@DateTime.Now.AddMonths(3).ToString("yyyy-MM-dd")" />
                                 </div>
@@ -121,7 +121,7 @@
                                     <span class="input-group-text">
                                         <i class="bi bi-people"></i>
                                     </span>
-                                    <select asp-for="GuestsCount" class="form-select" id="guestsCount">
+                                    <select asp-for="GuestsCount" class="form-select" id="guestsCount" required>
                                     </select>
                                 </div>
                                 <span asp-validation-for="GuestsCount" class="text-danger small"></span>
@@ -150,7 +150,7 @@
                                        <li>Бронь действует в течение 15 минут после указанного времени</li>
                                        <li>При опоздании более чем на 15 минут столик может быть передан другим гостям</li>
                                        <li>Отмена бронирования возможна по телефону</li>
-                                       <li>Ресторан оставляет за собой право отказать в обслуживании</li>                                                 
+                                       <li>Ресторан оставляет за собой право отказать в обслуживании</li>
                                    </ol>"
                                    data-bs-html="true">правилами бронирования
                             </a>
@@ -178,33 +178,98 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            const popoverTrigger = document.querySelector('.rules-link');
+            if (popoverTrigger) {
+                new bootstrap.Popover(popoverTrigger, {
+                    trigger: 'hover focus',
+                    html: true,
+                    container: 'body'
+                });
+            }
+
+            setDefaultDate();
+            populateTimeOptions();
+            setupGuestsSelection();
+            setupFormValidation();
+        });
+
+        function setDefaultDate() {
             const tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
             const dateInput = document.querySelector('input[name="BookingDate"]');
             if (dateInput && !dateInput.value) {
-                dateInput.value = tomorrow.toISOString().split('T')[0];
+                dateInput.valueAsDate = tomorrow;
+            }
+        }
+
+        function populateTimeOptions() {
+            const select = document.getElementById('bookingTimeSelect');
+            if (!select) return;
+
+            const startHour = 12;
+            const endHour = 22;
+
+            for (let hour = startHour; hour <= endHour; hour++) {
+                for (let minute = 0; minute < 60; minute += 15) {
+                    if (hour === endHour && minute > 0) break;
+
+                    const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+                    const timeValue = `${timeString}:00`;
+
+                    const option = document.createElement('option');
+                    option.value = timeValue;
+                    option.textContent = timeString;
+
+                    if (timeString === '19:00') option.selected = true;
+
+                    select.appendChild(option);
+                }
+            }
+        }
+
+        function setupGuestsSelection() {
+            const tableCapacity = @table?.Capacity;
+            const guestsSelect = document.getElementById('guestsCount');
+
+            if (!guestsSelect) return;
+
+            let minGuests = 1;
+            if (tableCapacity >= 6) minGuests = 4;
+            else if (tableCapacity == 4) minGuests = 2;
+
+            guestsSelect.innerHTML = '';
+
+            for (let i = minGuests; i <= tableCapacity; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = `${i} ${getRussianWord(i)}`;
+                guestsSelect.appendChild(option);
+                if (i === minGuests) option.selected = true;
             }
 
-            const timeInput = document.querySelector('input[name="BookingTime"]');
-            if (timeInput && !timeInput.value) {
-                timeInput.value = '19:00';
-            }
+            function getRussianWord(number) {
+                const lastDigit = number % 10;
+                const lastTwoDigits = number % 100;
 
-            (function () {
-                'use strict'
-                var forms = document.querySelectorAll('.needs-validation')
-                Array.prototype.slice.call(forms)
-                    .forEach(function (form) {
-                        form.addEventListener('submit', function (event) {
-                            if (!form.checkValidity()) {
-                                event.preventDefault()
-                                event.stopPropagation()
-                            }
-                            form.classList.add('was-validated')
-                        }, false)
-                    })
-            })()
-        });
+                if (lastTwoDigits >= 11 && lastTwoDigits <= 14) return 'гостей';
+                if (lastDigit === 1) return 'гость';
+                if (lastDigit >= 2 && lastDigit <= 4) return 'гостя';
+                return 'гостей';
+            }
+        }
+
+        function setupFormValidation() {
+            const form = document.getElementById('bookingForm');
+            if (!form) return;
+
+            form.addEventListener('submit', function(event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            });
+        }
     </script>
 }
 
@@ -286,114 +351,3 @@
         box-shadow: 0 0 0 0.25rem rgba(32, 201, 151, 0.25);
     }
 </style>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const tableCapacity = @table?.Capacity; 
-        const guestsSelect = document.getElementById('guestsCount');
-
-        let minGuests = 1;
-
-        if (tableCapacity >= 6) {
-            minGuests = 4; 
-        } else if (tableCapacity == 4) {
-            minGuests = 2; 
-        } else if (tableCapacity == 2) {
-            minGuests = 1;
-        }
-
-        guestsSelect.innerHTML = '';
-
-        for (let i = minGuests; i <= tableCapacity; i++) {
-            const option = document.createElement('option');
-            option.value = i;
-            option.textContent = i + ' ' + getRussianWord(i);
-            guestsSelect.appendChild(option);
-
-            if (i === minGuests) {
-                option.selected = true;
-            }
-        }
-
-        function getRussianWord(number) {
-            const lastDigit = number % 10;
-            const lastTwoDigits = number % 100;
-
-            if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
-                return 'гостей';
-            }
-
-            if (lastDigit === 1) {
-                return 'гость';
-            } else if (lastDigit >= 2 && lastDigit <= 4) {
-                return 'гостя';
-            } else {
-                return 'гостей';
-            }
-        }
-
-        document.getElementById('maxCapacity').textContent = tableCapacity;
-    });
-
-     document.addEventListener('DOMContentLoaded', function() {
-            const rulesPopover = new bootstrap.Popover(document.querySelector('.rules-link'), {
-                trigger: 'hover focus',
-                html: true,
-                container: 'body'
-            });
-
-            populateTimeOptions();
-
-            setDefaultDate();
-
-            setupFormValidation();
-        });
-
-        function populateTimeOptions() {
-            const select = document.getElementById('bookingTimeSelect');
-            if (!select) return;
-
-            const startHour = 12;
-            const endHour = 22;
-
-            for (let hour = startHour; hour <= endHour; hour++) {
-                for (let minute = 0; minute < 60; minute += 15) {
-                    if (hour === endHour && minute > 0) break;
-
-                    const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-                    const timeValue = `${timeString}:00`; 
-
-                    const option = document.createElement('option');
-                    option.value = timeValue;
-                    option.textContent = timeString;
-
-                    if (timeString === '19:00') {
-                        option.selected = true;
-                    }
-
-                    select.appendChild(option);
-                }
-            }
-        }
-
-        function setDefaultDate() {
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            const dateInput = document.querySelector('input[name="BookingDate"]');
-            if (dateInput && !dateInput.value) {
-                dateInput.value = tomorrow.toISOString().split('T')[0];
-            }
-        }
-
-        function setupFormValidation() {
-            const form = document.getElementById('bookingForm');
-            if (!form) return;
-
-            form.addEventListener('submit', function(event) {
-                if (!form.checkValidity()) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                }
-                form.classList.add('was-validated');
-            }, false);
-        }
-</script>

@@ -1,0 +1,487 @@
+﻿@model List<RestaurantSystem.Models.Item>
+@{
+    ViewData["Title"] = "Оформление заказа";
+    var bookingId = ViewBag.BookingId as int?;
+    var bookingInfo = ViewBag.BookingInfo as string;
+}
+
+<div class="container-fluid mt-3">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card shadow-sm sticky-top" style="top: 20px;">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-search me-2"></i>Поиск блюд
+                        <span class="badge bg-light text-dark float-end">блюд: @Model.Count</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <input type="text" class="form-control" id="searchInput"
+                               placeholder="Начните вводить название блюда...">
+                    </div>
+
+                    <div class="list-group" id="itemsList" style="max-height: 400px; overflow-y: auto;">
+                        @foreach (var item in Model)
+                        {
+                            <a href="#" class="list-group-item list-group-item-action item-select"
+                               data-id="@item.Id"
+                               data-title="@item.Title"
+                               data-price="@(item.Price ?? 0)">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">@item.Title</h6>
+                                    <small class="text-muted">@(item.Price?.ToString("N0")) ₽</small>
+                                </div>
+                                <p class="mb-1 small text-muted">@item.Summary</p>
+                            </a>
+                        }
+                    </div>
+
+                    <div class="mt-3" id="itemForm" style="display: none;">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 id="selectedItemTitle" class="card-title"></h6>
+                                <div class="mb-3">
+                                    <label class="form-label">Количество порций</label>
+                                    <input type="number" class="form-control" id="quantityInput"
+                                           min="1" max="10" step="1" value="1">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Примечание для кухни</label>
+                                    <textarea class="form-control" id="notesInput" rows="2"
+                                              placeholder="Без лука, острый и т.д."></textarea>
+                                </div>
+                                <button type="button" class="btn btn-success w-100" id="addToOrderBtn">
+                                    <i class="bi bi-plus-circle me-1"></i> Добавить в заказ
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-cart me-2"></i>Текущий заказ
+                            <span class="badge bg-light text-dark ms-2" id="orderInfo">@bookingInfo</span>
+                        </h5>
+                        <a asp-controller="Account" asp-action="Dashboard" class="btn btn-light btn-sm">
+                            <i class="bi bi-arrow-left me-1"></i> Назад
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    @if (string.IsNullOrEmpty(bookingInfo) || bookingInfo == "Обычный заказ (без брони)")
+                    {
+                        <div class="mb-4" id="tableSelection">
+                            <div class="card">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0"><i class="bi bi-table me-2"></i>Выбор столика</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="input-group">
+                                                <span class="input-group-text">
+                                                    <i class="bi bi-search"></i>
+                                                </span>
+                                                <input type="text" class="form-control"
+                                                       id="tableSearch"
+                                                       placeholder="Поиск столика по номеру...">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="input-group">
+                                                <span class="input-group-text">
+                                                    <i class="bi bi-table"></i>
+                                                </span>
+                                                <select class="form-select" id="tableSelect">
+                                                    <option value="">-- Выберите столик --</option>
+                                                    @foreach (var table in ViewBag.AvailableTables ?? new List<TableTop>())
+                                                    {
+                                                        <option value="@table.Code"
+                                                                data-capacity="@table.Capacity"
+                                                                data-id="@table.Id">
+                                                            Стол @table.Code (мест: @table.Capacity)
+                                                        </option>
+                                                    }
+                                                </select>
+                                            </div>
+                                            <small class="text-muted">Выберите столик для обслуживания</small>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2" id="selectedTableInfo" style="display: none;">
+                                        <div class="alert alert-info mb-0 py-2">
+                                            <i class="bi bi-check-circle me-2"></i>
+                                            Выбран: <strong id="selectedTableText"></strong>
+                                            <input type="hidden" id="selectedTableId" />
+                                            <input type="hidden" id="selectedTableCode" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="orderTable">
+                            <thead>
+                                <tr>
+                                    <th>Блюдо</th>
+                                    <th width="120">Кол-во</th>
+                                    <th width="100">Цена</th>
+                                    <th width="60">Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orderItems">
+                                <tr id="emptyOrder">
+                                    <td colspan="4" class="text-center text-muted py-4">
+                                        <i class="bi bi-cart-x display-6"></i>
+                                        <p class="mt-2">Заказ пуст. Выберите блюда слева.</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tfoot id="orderFooter" style="display: none;">
+                                <tr>
+                                    <td colspan="2" class="text-end"><strong>Итого:</strong></td>
+                                    <td><strong id="totalPrice">0</strong> ₽</td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="4">
+                                        <div class="d-flex justify-content-between align-items-center mt-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="applyDiscount">
+                                                <label class="form-check-label" for="applyDiscount">
+                                                    Применить скидку 10% на весь заказ
+                                                </label>
+                                            </div>
+                                            <button type="button" class="btn btn-primary" id="completeOrderBtn">
+                                                <i class="bi bi-check-circle me-1"></i> Оформить заказ
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<input type="hidden" id="bookingId" value="@bookingId" />
+
+@section Scripts {
+    <script>
+        let currentOrder = [];
+        let selectedItem = null;
+        let selectedTableId = null;
+        let selectedTableCode = null;
+
+        document.getElementById('searchInput').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const items = document.querySelectorAll('.item-select');
+            items.forEach(item => {
+                const title = item.querySelector('h6').textContent.toLowerCase();
+                item.style.display = title.includes(searchTerm) ? '' : 'none';
+            });
+        });
+
+        const tableSearch = document.getElementById('tableSearch');
+        if (tableSearch) {
+            tableSearch.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const options = document.querySelectorAll('#tableSelect option');
+
+                options.forEach(option => {
+                    if (option.value === '') return;
+
+                    const tableText = option.textContent.toLowerCase();
+                    option.style.display = tableText.includes(searchTerm) ? '' : 'none';
+                });
+            });
+        }
+
+        const tableSelect = document.getElementById('tableSelect');
+        if (tableSelect) {
+            tableSelect.addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+
+                if (selectedOption.value) {
+                    selectedTableId = selectedOption.getAttribute('data-id');
+                    selectedTableCode = selectedOption.value;
+
+                    document.getElementById('selectedTableInfo').style.display = 'block';
+                    document.getElementById('selectedTableText').textContent =
+                        `Стол ${selectedTableCode} (мест: ${selectedOption.getAttribute('data-capacity')})`;
+                    document.getElementById('selectedTableId').value = selectedTableId;
+                    document.getElementById('selectedTableCode').value = selectedTableCode;
+
+                    document.getElementById('orderInfo').innerHTML =
+                        `<span class="badge bg-light text-dark">Обычный заказ - Стол ${selectedTableCode}</span>`;
+                } else {
+                    document.getElementById('selectedTableInfo').style.display = 'none';
+                    selectedTableId = null;
+                    selectedTableCode = null;
+                }
+            });
+        }
+
+        document.querySelectorAll('.item-select').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                document.querySelectorAll('.item-select').forEach(i => {
+                    i.classList.remove('selected');
+                });
+
+                this.classList.add('selected');
+
+                selectedItem = {
+                    id: parseInt(this.dataset.id),
+                    title: this.dataset.title,
+                    price: parseFloat(this.dataset.price)
+                };
+
+                document.getElementById('itemForm').style.display = 'block';
+                document.getElementById('selectedItemTitle').textContent = selectedItem.title;
+                document.getElementById('quantityInput').value = 1;
+                document.getElementById('notesInput').value = '';
+            });
+        });
+
+        document.getElementById('addToOrderBtn').addEventListener('click', function() {
+            if (!selectedItem) {
+                alert('Сначала выберите блюдо из списка слева!');
+                return;
+            }
+
+            const quantity = parseInt(document.getElementById('quantityInput').value) || 1;
+            const notes = document.getElementById('notesInput').value.trim();
+
+            if (quantity < 1) {
+                alert('Количество должно быть не менее 1');
+                return;
+            }
+
+            const price = selectedItem.price * quantity;
+
+            const existingIndex = currentOrder.findIndex(item => item.itemId === selectedItem.id);
+
+            if (existingIndex !== -1) {
+                currentOrder[existingIndex].quantity += quantity;
+                currentOrder[existingIndex].price = selectedItem.price * currentOrder[existingIndex].quantity;
+                if (notes) {
+                    currentOrder[existingIndex].notes = currentOrder[existingIndex].notes
+                        ? currentOrder[existingIndex].notes + ', ' + notes
+                        : notes;
+                }
+            } else {
+                currentOrder.push({
+                    uniqueId: Date.now(),
+                    itemId: selectedItem.id,
+                    itemName: selectedItem.title,
+                    quantity: quantity,
+                    price: price,
+                    notes: notes
+                });
+            }
+
+            updateOrderTable();
+
+            document.getElementById('quantityInput').value = 1;
+            document.getElementById('notesInput').value = '';
+        });
+
+        function updateOrderTable() {
+            const tbody = document.getElementById('orderItems');
+            const emptyRow = document.getElementById('emptyOrder');
+            const footer = document.getElementById('orderFooter');
+
+            tbody.innerHTML = '';
+
+            if (currentOrder.length === 0) {
+                if (emptyRow) {
+                    emptyRow.style.display = '';
+                    tbody.appendChild(emptyRow);
+                }
+                if (footer) footer.style.display = 'none';
+                return;
+            }
+
+            if (emptyRow) emptyRow.style.display = 'none';
+
+            let total = 0;
+
+            currentOrder.forEach((item, index) => {
+                total += item.price;
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <strong>${item.itemName}</strong>
+                        ${item.notes ? `<br><small class="text-muted">${item.notes}</small>` : ''}
+                    </td>
+                    <td>
+                        <div class="input-group input-group-sm" style="width: 120px;">
+                            <button class="btn btn-outline-secondary" type="button" onclick="updateQuantity(${index}, -1)">-</button>
+                            <input type="number" class="form-control text-center quantity-input"
+                                   value="${item.quantity}" min="1"
+                                   onchange="updateQuantity(${index}, 0, this.value)">
+                            <button class="btn btn-outline-secondary" type="button" onclick="updateQuantity(${index}, 1)">+</button>
+                        </div>
+                    </td>
+                    <td>${item.price.toFixed(0)} ₽</td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-link text-danger p-0"
+                                onclick="removeItem(${index})" title="Удалить">
+                            ❌
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            const applyDiscount = document.getElementById('applyDiscount');
+            let finalTotal = total;
+
+            if (applyDiscount && applyDiscount.checked) {
+                finalTotal = total * 0.9;
+            }
+
+            document.getElementById('totalPrice').textContent = finalTotal.toFixed(0);
+
+            if (footer) footer.style.display = '';
+        }
+
+        window.updateQuantity = function(index, change, newValue = null) {
+            if (index >= 0 && index < currentOrder.length) {
+                let newQuantity;
+
+                if (newValue !== null) {
+                    newQuantity = parseInt(newValue) || 1;
+                } else {
+                    newQuantity = currentOrder[index].quantity + change;
+                }
+
+                if (newQuantity < 1) newQuantity = 1;
+
+                currentOrder[index].quantity = newQuantity;
+                currentOrder[index].price = (currentOrder[index].price / currentOrder[index].quantity) * newQuantity;
+
+                updateOrderTable();
+            }
+        };
+
+        window.removeItem = function(index) {
+            if (index >= 0 && index < currentOrder.length) {
+                currentOrder.splice(index, 1);
+                updateOrderTable();
+            }
+        };
+
+        document.getElementById('completeOrderBtn').addEventListener('click', async function() {
+            if (currentOrder.length === 0) {
+                alert('Добавьте хотя бы одно блюдо в заказ');
+                return;
+            }
+
+            const bookingId = document.getElementById('bookingId').value || null;
+            const applyDiscount = document.getElementById('applyDiscount').checked;
+
+            if (!bookingId || bookingId === "0") {
+                if (!selectedTableId) {
+                    alert('Для обычного заказа необходимо выбрать столик!');
+                    const tableSelect = document.getElementById('tableSelect');
+                    if (tableSelect) tableSelect.focus();
+                    return;
+                }
+            }
+
+            const btn = this;
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Оформление...';
+
+            try {
+                const orderData = {
+                    bookingId: bookingId && bookingId !== "0" ? parseInt(bookingId) : null,
+                    applyDiscount: applyDiscount,
+                    tableId: selectedTableId ? parseInt(selectedTableId) : null,
+                    customerName: "Гость",
+                    guestsCount: 1,
+                    items: currentOrder.map(item => ({
+                        itemId: parseInt(item.itemId),
+                        quantity: parseInt(item.quantity),
+                        notes: item.notes || ''
+                    }))
+                };
+
+                const response = await fetch('/Waiter/CompleteOrderWithItems', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(orderData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    window.location.href = result.redirectUrl || '/Account/Dashboard';
+                } else {
+                    throw new Error(result.error || 'Неизвестная ошибка');
+                }
+
+            } catch (error) {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                alert('Ошибка: ' + error.message);
+            }
+        });
+    </script>
+
+    <style>
+        .item-select.selected {
+            border: 2px solid #0d6efd !important;
+            border-radius: 4px;
+        }
+
+        .item-select:hover {
+            background-color: inherit !important;
+        }
+
+        .quantity-input {
+            max-width: 60px;
+        }
+
+        .input-group-sm > .btn {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .btn-link.text-danger {
+            text-decoration: none;
+            font-size: 18px;
+        }
+
+            .btn-link.text-danger:hover {
+                opacity: 0.8;
+            }
+
+        #tableSelect {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        #selectedTableInfo {
+            transition: all 0.3s ease;
+        }
+    </style>
+}
