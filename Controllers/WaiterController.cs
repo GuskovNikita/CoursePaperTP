@@ -97,7 +97,8 @@ namespace RestaurantSystem.Controllers
                     _context.Bookings.Add(tempBooking);
                     await _context.SaveChangesAsync();
 
-                    _context.Bookings.Add(tempBooking);
+                    bookingId = tempBooking.Id;
+
                     if (table != null) table.Status = 0;
                     await _context.SaveChangesAsync();
                 }

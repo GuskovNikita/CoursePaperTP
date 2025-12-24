@@ -5,6 +5,7 @@ using RestaurantSystem.Models;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace RestaurantSystem.Controllers
 {
@@ -18,18 +19,65 @@ namespace RestaurantSystem.Controllers
             _context = context;
         }
 
-        // GET: /Booking/Create
-        public async Task<IActionResult> Create()
+        private static readonly TimeSpan BookingDuration = TimeSpan.FromMinutes(90);
+
+        private static bool IsOverlap(TimeSpan startA, TimeSpan endA, TimeSpan startB, TimeSpan endB)
         {
+            return startA < endB && startB < endA;
+        }
+
+        private async Task<HashSet<int>> GetUnavailableTableIdsAsync(DateTime date, TimeSpan requestedStart)
+        {
+            var requestedEnd = requestedStart.Add(BookingDuration);
+
+            var sameDayBookings = await _context.Bookings
+                .Where(b => b.Status == 1
+                    && b.TableId != null
+                    && b.BookingDate != null
+                    && b.BookingTime != null
+                    && b.BookingDate.Value.Date == date.Date)
+                .Select(b => new { b.TableId, b.BookingTime })
+                .ToListAsync();
+
+            var blocked = new HashSet<int>();
+
+            foreach (var b in sameDayBookings)
+            {
+                var start = b.BookingTime!.Value;
+                var end = start.Add(BookingDuration);
+
+                if (IsOverlap(start, end, requestedStart, requestedEnd))
+                    blocked.Add(b.TableId!.Value);
+            }
+
+            return blocked;
+        }
+
+        // GET: /Booking/Create
+        public async Task<IActionResult> Create(DateTime? date, TimeSpan? time)
+        {
+            var selectedDate = (date ?? DateTime.Now.AddDays(1)).Date;
+            if (selectedDate <= DateTime.Today)
+            {
+                selectedDate = DateTime.Today.AddDays(1);
+            }
+            var selectedTime = time ?? new TimeSpan(19, 0, 0);
+
             var tables = await _context.TableTops
                 .OrderBy(t => t.Code)
                 .ToListAsync();
+
+            var blockedIds = await GetUnavailableTableIdsAsync(selectedDate, selectedTime);
+
+            ViewBag.SelectedDate = selectedDate;
+            ViewBag.SelectedTime = selectedTime;
+            ViewBag.BlockedIds = blockedIds;
 
             return View(tables);
         }
 
         // GET: /Booking/BookTable/5 
-        public async Task<IActionResult> BookTable(int id)
+        public async Task<IActionResult> BookTable(int id, DateTime? date, TimeSpan? time)
         {
             var table = await _context.TableTops.FindAsync(id);
 
@@ -44,8 +92,8 @@ namespace RestaurantSystem.Controllers
             var booking = new Booking
             {
                 TableId = id,
-                BookingDate = DateTime.Now.AddDays(1),
-                BookingTime = new TimeSpan(19, 0, 0), 
+                BookingDate = (date ?? DateTime.Now.AddDays(1)).Date,
+                BookingTime = time ?? new TimeSpan(19, 0, 0),
                 GuestsCount = 2,
                 Status = 1 
             };
@@ -62,12 +110,6 @@ namespace RestaurantSystem.Controllers
             if (table == null)
             {
                 TempData["Error"] = "Столик не найден";
-                return RedirectToAction("Create");
-            }
-
-            if (table.Status != 1)
-            {
-                TempData["Error"] = "Этот столик уже занят. Пожалуйста, выберите другой.";
                 return RedirectToAction("Create");
             }
 
@@ -92,12 +134,20 @@ namespace RestaurantSystem.Controllers
                     booking.Status = 1; 
                     booking.UserId = null;
 
+                    var blockedIds = await GetUnavailableTableIdsAsync(booking.BookingDate!.Value.Date, booking.BookingTime!.Value);
+                    if (blockedIds.Contains(booking.TableId!.Value))
+                    {
+                        TempData["Error"] = "Этот столик уже забронирован на выбранное время. Выберите другое время или стол.";
+                        return RedirectToAction("Create", new
+                        {
+                            date = booking.BookingDate.Value.ToString("yyyy-MM-dd"),
+                            time = booking.BookingTime.Value.ToString(@"hh\:mm\:ss")
+                        });
+                    }
+
                     _context.Add(booking);
 
                     await _context.SaveChangesAsync();
-
-                    await _context.Database.ExecuteSqlInterpolatedAsync(
-                        $"UPDATE table_top SET status = 0 WHERE id = {table.Id}");
 
                     await transaction.CommitAsync();
 

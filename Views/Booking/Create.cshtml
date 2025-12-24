@@ -5,6 +5,10 @@
     var windowTables = Model.Where(t => t.Capacity == 2).ToList(); 
     var centerTables = Model.Where(t => t.Capacity >= 6).ToList(); 
     var wallTables = Model.Where(t => t.Capacity == 4).ToList();
+
+    var selectedDate = (DateTime)(ViewBag.SelectedDate ?? DateTime.Now.AddDays(1));
+    var selectedTime = (TimeSpan)(ViewBag.SelectedTime ?? new TimeSpan(19, 0, 0));
+    var blocked = ViewBag.BlockedIds as HashSet<int> ?? new HashSet<int>();
 }
 
 <div class="container mt-4">
@@ -26,8 +30,26 @@
                     </div>
                 </div>
 
+                <div class="filters mb-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Дата</label>
+                            <input type="date" class="form-control" id="datePick"
+                                   value="@selectedDate.ToString("yyyy-MM-dd")"
+                                   min="@DateTime.Now.AddDays(1).ToString("yyyy-MM-dd")" 
+                                   max="@DateTime.Now.AddMonths(3).ToString("yyyy-MM-dd")" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Время</label>
+                            <select class="form-select" id="timePick"></select>
+                            <small class="text-muted">Работаем с 12:00 до 23:00, бронь 90 минут</small>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="card-body">
-                    <div class="filters mb-4">
+                    <div class="filters mb-4" id="tableFilters">
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label">Вместимость</label>
@@ -58,16 +80,26 @@
                         <div class="row g-3" id="windowTables">
                             @foreach (var table in windowTables)
                             {
+                                var isBookedForTime = blocked.Contains(table.Id);
+                                var isAvailable = !isBookedForTime && table.Status == 1;
+
                                 <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
-                                    <div class="table-card @(table.Status == 1 ? "available" : "occupied")"
+                                    <div class="table-card @(isAvailable ? "available" : "occupied")"
                                          data-capacity="@table.Capacity"
                                          data-zone="window">
-                                        @if (table.Status == 1)
+
+                                        @if (isAvailable)
                                         {
-                                            <a asp-action="BookTable" asp-route-id="@table.Id" class="table-card-link">
+                                            <a asp-action="BookTable"
+                                               asp-route-id="@table.Id"
+                                               asp-route-date="@selectedDate.ToString("yyyy-MM-dd")"
+                                               asp-route-time="@selectedTime.ToString(@"hh\:mm\:ss")"
+                                               class="table-card-link">
+
                                                 <div class="table-card-header">
                                                     <span class="table-number">Стол @table.Code</span>
                                                 </div>
+
                                                 <div class="table-card-body">
                                                     <div class="table-info">
                                                         <div class="info-item">
@@ -79,6 +111,7 @@
                                                         </div>
                                                     </div>
                                                 </div>
+
                                                 <div class="table-card-footer">
                                                     <button class="btn btn-sm btn-success w-100">
                                                         <i class="bi bi-check-circle me-1"></i> Выбрать
@@ -91,7 +124,7 @@
                                             <div class="table-card-link disabled">
                                                 <div class="table-card-header">
                                                     <span class="table-number">Стол @table.Code</span>
-                                                    <span class="badge bg-danger">Занят</span>
+                                                    <span class="badge bg-danger badge-booked">Забронирован</span>
                                                 </div>
                                                 <div class="table-card-body">
                                                     <div class="table-info">
@@ -125,17 +158,26 @@
                         <div class="row g-3" id="centerTables">
                             @foreach (var table in centerTables)
                             {
+                                var isBookedForTime = blocked.Contains(table.Id);
+                                var isAvailable = !isBookedForTime && table.Status == 1;
+
                                 <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
-                                    <div class="table-card @(table.Status == 1 ? "available" : "occupied")"
+                                    <div class="table-card @(isAvailable ? "available" : "occupied")"
                                          data-capacity="@table.Capacity"
                                          data-zone="center">
-                                        @if (table.Status == 1)
+
+                                        @if (isAvailable)
                                         {
-                                            <a asp-action="BookTable" asp-route-id="@table.Id" class="table-card-link">
+                                            <a asp-action="BookTable"
+                                               asp-route-id="@table.Id"
+                                               asp-route-date="@selectedDate.ToString("yyyy-MM-dd")"
+                                               asp-route-time="@selectedTime.ToString(@"hh\:mm\:ss")"
+                                               class="table-card-link">
+
                                                 <div class="table-card-header">
                                                     <span class="table-number">Стол @table.Code</span>
-                                                    <span class="badge bg-warning">Большой</span>
                                                 </div>
+
                                                 <div class="table-card-body">
                                                     <div class="table-info">
                                                         <div class="info-item">
@@ -147,6 +189,7 @@
                                                         </div>
                                                     </div>
                                                 </div>
+
                                                 <div class="table-card-footer">
                                                     <button class="btn btn-sm btn-success w-100">
                                                         <i class="bi bi-check-circle me-1"></i> Выбрать
@@ -159,8 +202,7 @@
                                             <div class="table-card-link disabled">
                                                 <div class="table-card-header">
                                                     <span class="table-number">Стол @table.Code</span>
-                                                    <span class="badge bg-danger">Занят</span>
-                                                    <span class="badge bg-warning">Большой</span>
+                                                    <span class="badge bg-danger badge-booked">Забронирован</span>
                                                 </div>
                                                 <div class="table-card-body">
                                                     <div class="table-info">
@@ -194,16 +236,26 @@
                         <div class="row g-3" id="wallTables">
                             @foreach (var table in wallTables)
                             {
+                                var isBookedForTime = blocked.Contains(table.Id);
+                                var isAvailable = !isBookedForTime && table.Status == 1;
+
                                 <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
-                                    <div class="table-card @(table.Status == 1 ? "available" : "occupied")"
+                                    <div class="table-card @(isAvailable ? "available" : "occupied")"
                                          data-capacity="@table.Capacity"
                                          data-zone="wall">
-                                        @if (table.Status == 1)
+
+                                        @if (isAvailable)
                                         {
-                                            <a asp-action="BookTable" asp-route-id="@table.Id" class="table-card-link">
+                                            <a asp-action="BookTable"
+                                               asp-route-id="@table.Id"
+                                               asp-route-date="@selectedDate.ToString("yyyy-MM-dd")"
+                                               asp-route-time="@selectedTime.ToString(@"hh\:mm\:ss")"
+                                               class="table-card-link">
+
                                                 <div class="table-card-header">
                                                     <span class="table-number">Стол @table.Code</span>
                                                 </div>
+
                                                 <div class="table-card-body">
                                                     <div class="table-info">
                                                         <div class="info-item">
@@ -215,6 +267,7 @@
                                                         </div>
                                                     </div>
                                                 </div>
+
                                                 <div class="table-card-footer">
                                                     <button class="btn btn-sm btn-success w-100">
                                                         <i class="bi bi-check-circle me-1"></i> Выбрать
@@ -227,7 +280,7 @@
                                             <div class="table-card-link disabled">
                                                 <div class="table-card-header">
                                                     <span class="table-number">Стол @table.Code</span>
-                                                    <span class="badge bg-danger">Занят</span>
+                                                    <span class="badge bg-danger badge-booked">Забронирован</span>
                                                 </div>
                                                 <div class="table-card-body">
                                                     <div class="table-info">
@@ -403,11 +456,18 @@
         margin-bottom: 30px;
     }
 
-        .filters .form-label {
-            font-weight: 600;
-            color: #495057;
-            margin-bottom: 10px;
-        }
+    .filters .form-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 10px;
+    }
+
+    .badge-booked {
+        font-size: 0.65rem;
+        padding: 0.25rem 0.4rem;
+        line-height: 1;
+        white-space: nowrap;
+    }
 
     @@media (max-width: 768px) {
         .table-card-header {
@@ -427,6 +487,42 @@
 </style>
 
 <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const startHour = 12;
+      const endHour = 22;
+      const timePick = document.getElementById('timePick');
+
+      const selected = '@selectedTime.ToString(@"hh\:mm\:ss")';
+
+      for (let hour = startHour; hour <= endHour; hour++) {
+        for (let minute = 0; minute < 60; minute += 30) {
+          if (hour === endHour && minute > 0) break;
+
+          const hh = hour.toString().padStart(2,'0');
+          const mm = minute.toString().padStart(2,'0');
+          const val = `${hh}:${mm}:00`;
+
+          const opt = document.createElement('option');
+          opt.value = val;
+          opt.textContent = `${hh}:${mm}`;
+          if (val === selected) opt.selected = true;
+          timePick.appendChild(opt);
+        }
+      }
+
+      function reload() {
+        const d = document.getElementById('datePick').value;
+        const t = timePick.value;
+        const url = new URL(window.location.href);
+        url.searchParams.set('date', d);
+        url.searchParams.set('time', t);
+        window.location.href = url.toString();
+      }
+
+      document.getElementById('datePick').addEventListener('change', reload);
+      timePick.addEventListener('change', reload);
+    });
+
     document.addEventListener('DOMContentLoaded', function() {
         const capacityFilter = document.getElementById('capacityFilter');
         const zoneFilter = document.getElementById('zoneFilter');
@@ -486,6 +582,6 @@
             filterTables();
         });
 
-        document.querySelector('.filters').appendChild(resetFilters);
+        document.getElementById('tableFilters').appendChild(resetFilters);
     });
 </script>

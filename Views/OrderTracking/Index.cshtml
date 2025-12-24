@@ -57,13 +57,10 @@
                                             {
                                                 <span class="badge bg-info ms-1">@order.TableInfo</span>
                                             }
-                                            @if (order.BookingToken != null)
+                                            @if (!string.IsNullOrWhiteSpace(order.BookingToken)
+                                           && !order.BookingToken.StartsWith("NOBOOK"))
                                             {
-                                                <span class="badge bg-success ms-1">Бронь: @order.BookingToken</span>
-                                            }
-                                            else
-                                            {
-                                                <span class="badge bg-warning ms-1">Без брони</span>
+                                                <span class="badge bg-success">Бронь: @order.BookingToken</span>
                                             }
                                         </div>
                                         <div>

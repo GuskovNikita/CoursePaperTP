@@ -195,14 +195,12 @@ namespace RestaurantSystem.Controllers
 
                 string message;
 
-                if (booking != null && booking.Status == 1) 
+                if (booking != null)
                 {
                     booking.Status = 2;
 
                     if (booking.Table != null)
-                    {
-                        booking.Table.Status = 1; 
-                    }
+                        booking.Table.Status = 1;
 
                     message = "Заказ закрыт, бронь завершена" +
                               (booking.Table != null ? " и столик освобожден" : "");
@@ -211,6 +209,7 @@ namespace RestaurantSystem.Controllers
                 {
                     message = "Заказ успешно закрыт";
                 }
+
 
                 await _context.SaveChangesAsync();
 
