@@ -19,7 +19,7 @@
         <div class="card-body">
             <div class="row mb-4">
                 <div class="col-md-3 col-sm-6 mb-3">
-                    <div class="card bg-primary text-white">
+                    <div class="card bg-primary text-white h-100">
                         <div class="card-body text-center">
                             <h5 class="card-title">Общая выручка</h5>
                             <h2 class="display-6">@Model.TotalRevenue.ToString("N0") ₽</h2>
@@ -28,7 +28,7 @@
                     </div>
                 </div>
                 <div class="col-md-3 col-sm-6 mb-3">
-                    <div class="card bg-success text-white">
+                    <div class="card bg-success text-white h-100">
                         <div class="card-body text-center">
                             <h5 class="card-title">Всего заказов</h5>
                             <h2 class="display-6">@Model.TotalOrders</h2>
@@ -37,7 +37,7 @@
                     </div>
                 </div>
                 <div class="col-md-3 col-sm-6 mb-3">
-                    <div class="card bg-info text-white">
+                    <div class="card bg-info text-white h-100">
                         <div class="card-body text-center">
                             <h5 class="card-title">Всего броней</h5>
                             <h2 class="display-6">@Model.TotalBookings</h2>
@@ -46,7 +46,7 @@
                     </div>
                 </div>
                 <div class="col-md-3 col-sm-6 mb-3">
-                    <div class="card bg-warning text-white">
+                    <div class="card bg-warning text-white h-100">
                         <div class="card-body text-center">
                             <h5 class="card-title">Дата отчета</h5>
                             <h4 class="mt-2">@Model.ReportDate.ToString("dd.MM.yyyy")</h4>
